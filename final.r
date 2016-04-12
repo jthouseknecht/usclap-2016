@@ -1,5 +1,5 @@
 #!/bin/R -f
-# vim: textwidth=80 autoindent
+# vim: textwidth=80 autoindent expandtab
 
 # First we need to read in our dataset
 rawdata <- read.table(
@@ -100,7 +100,7 @@ p0   <- 0.25
 pp   <- pHat
 B    <- pnorm(
           (p0 - pp + qnorm(a, lower.tail=FALSE)*
-	   sqrt(p0*(1-p0)/n))/sqrt(pp*(1-pp)/n),
+           sqrt(p0*(1-p0)/n))/sqrt(pp*(1-pp)/n),
           lower.tail=TRUE
         )
 power <- 1-B
@@ -121,7 +121,7 @@ power <- 0.05
 B     <- 1-power
 n     <- ( (qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)) +
             qnorm(B, lower.tail=FALSE)*sqrt(pp*(1-pp))) / (pp-p0)
-	 )^2
+         )^2
 
 
 
@@ -152,4 +152,31 @@ if (z > zcrit) {
   print("Mean claim: we reject the Null Hypothesis in the lower tail!")
 } else {
   print("Mean claim: we do not reject the Null Hypothesis.")
+}
+
+
+
+
+#########
+# 3. Standard Deviation claim, tested with confidence interval analysis
+#
+
+a  <- 0.05
+o0 <- 2
+v0 <- o0^2
+
+upper <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=TRUE)
+lower <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=FALSE)
+z     <- (n-1)*s^2/v0
+
+oupper <- sqrt(upper)
+olower <- sqrt(lower)
+oz     <- sqrt(z)
+
+if (oz > oupper) {
+  print("Standard Deviation claim: we reject the Null Hypothesis in the upper-tail!")
+} else if (oz < olower) {
+  print("Standard Deviation claim: we reject the Null Hypothesis in the lower tail!")
+} else {
+  print("Standard Deviation claim: we do not reject the Null Hypothesis.")
 }
