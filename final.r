@@ -1,15 +1,15 @@
 #!/bin/R -f
+# vim: textwidth=80 autoindent
 
-# The first step, is to read in the dataset we will be working with
-
-data <- read.table(
+# First we need to read in our dataset
+rawdata <- read.table(
   file="data.tsv",
   header=TRUE,
 
   # Field Separator
   sep='\t',
 
-  # Types of value in each column
+  # Column value types
   colClasses=c(
     "character",
     "character",
@@ -42,31 +42,44 @@ data <- read.table(
   )
 )
 
-# Split the data into frames of the location, the Easter data, and the Friday data
-Loc <- data[,1:2]
-Fri <- data[,3:15]
-Eas <- data[,16:28]
+# Split the imported data frame into a subframes:
+#   - Location
+#   - Good Friday weather
+#   - Easter weather
+Loc <- rawdata[,1:2]
+Fri <- rawdata[,3:15]
+Eas <- rawdata[,16:28]
 
-# Next, to transform the data set into a binomial variable for each day, for each city
+# Compress each row of each weather sub-frame into a single {1,0} number
+# indicating the overall weather for the day:
 #
-# s is the (hardcoded) preset proportion level for determining if a day is "rainy"
-s <- 1/3
-
-# Function to compute the mean, ignoring NA values
+#   1 if the day was "rainy" (True)
+#   0 if the day was "sunny" (False)
+#
+# We'll need the following function to compute the arithmatic mean of a
+# vector, while ignoring NA (missing) values
 mean.na <- function(v) mean(v[!is.na(v)])
+#
+# `s' is the threshold for declaring a day "rainy"; a day will be declared
+# rainy if and only if it has has a greater proportion of rainy to sunny
+# hours than `s'.
+s <- 1/2
 
-bFri <- as.numeric(apply(Fri, 1, mean.na) > s) # numeric() casts the logical value into {0,1}
-bEas <- as.numeric(apply(Eas, 1, mean.na) > s)
+bFri <- as.numeric(apply(Fri, 1, mean.na) > s) # numeric() casts the logical
+bEas <- as.numeric(apply(Eas, 1, mean.na) > s) # values into {0,1}
 
-# Now, transform the values into our test statistic:
-
-#    /  1 if it is raining on Friday, and Sunny on Easter
-#  p {
-#    \  0 otherwise
+# Compress the two values of each corresponding row in the weather subframes
+# into a single value {1,0}, indicating whether the weather goes from rain to
+# sun between Good Friday and Easter:
+#
+#   1 if it is raining on Good Friday, and Sunny on Easter (True)
+#   0 otherwise                                            (False)
 bP   <- as.numeric(bFri & !bEas)
 
-# Now, join those values into the combined data frame
-data <- data.frame(Loc$City, bP)
+# For pretty-printing, join this column with the `Cities' column of the
+# Location sub-frame
+data <- data.frame(City=Loc$City, Result=bP)
+print(data)
 
 ###############################################################################
 #                                Hypothesis Test                              #
@@ -75,38 +88,35 @@ n    <- length(bP)
 s    <- sd(bP)
 pHat <- mean(bP)
 
-# The Alternative Hypothesis is that p > 0.5; so this is a single-tailed-test
 p0   <- 0.25
 a    <- 0.05
 
+# pp stands for p' (p-prime)
+# The value of β (and hence, the power) is calculated at p = pHat
 pp   <- pHat
 B    <- pnorm(
-          (p0 - pp + qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)/n))/sqrt(pp*(1-pp)/n),
+          (p0 - pp + qnorm(a, lower.tail=FALSE)*
+	   sqrt(p0*(1-p0)/n))/sqrt(pp*(1-pp)/n),
           lower.tail=TRUE
         )
 power <- 1-B
 
-# Compute the test statistic
+# Compute the test statistic. This is an upper-tailed test.
 z      <- (pHat - p0)/sqrt(p0*(1-p0)/n)
 pValue <- pnorm(z, lower.tail=FALSE)
-
-
-pValue
-a
-power
-print("The value of β (and hence, the power) is calculated at p = pHat")
 
 if (pValue < a) {
   print("We reject the Null Hypothesis!")
 } else {
-  print("We do not reject the Null Hypothesis")
+  print("We do not reject the Null Hypothesis.")
 }
 
 
 # Necessary sample size for specified power
 power <- 0.05
 B     <- 1-power
-n     <- ( (qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)) + qnorm(B, lower.tail=FALSE)*sqrt(pp*(1-pp)))/
-           (pp-p0) )^2
+n     <- ( (qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)) +
+            qnorm(B, lower.tail=FALSE)*sqrt(pp*(1-pp))) / (pp-p0)
+	 )^2
 
-n
+print(n)
