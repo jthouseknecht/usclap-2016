@@ -1,3 +1,39 @@
-print("Hello World!")
+data <- read.table(
+  file="data.tsv",
+  header=TRUE,
 
-qnorm(0.95)
+  # Field Separator
+  sep='\t',
+
+  # Types of value in each column
+  colClasses=c(
+    "character",
+    "character",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric",
+    "numeric"
+  )
+)
