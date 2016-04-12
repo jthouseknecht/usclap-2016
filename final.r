@@ -82,14 +82,18 @@ data <- data.frame(City=Loc$City, Result=bP)
 print(data)
 
 ###############################################################################
-#                                Hypothesis Test                              #
+#                                Hypothesis Tests                             #
+
+
+#########
+# 1. Proportion claim, tested with p-score analysis
 
 n    <- length(bP)
 s    <- sd(bP)
-pHat <- mean(bP)
-
-p0   <- 0.25
 a    <- 0.05
+
+pHat <- mean(bP)
+p0   <- 0.25
 
 # pp stands for p' (p-prime)
 # The value of β (and hence, the power) is calculated at p = pHat
@@ -106,9 +110,9 @@ z      <- (pHat - p0)/sqrt(p0*(1-p0)/n)
 pValue <- pnorm(z, lower.tail=FALSE)
 
 if (pValue < a) {
-  print("We reject the Null Hypothesis!")
+  print("Proportion claim: we reject the Null Hypothesis!")
 } else {
-  print("We do not reject the Null Hypothesis.")
+  print("Proportion claim: we do not reject the Null Hypothesis.")
 }
 
 
@@ -119,4 +123,33 @@ n     <- ( (qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)) +
             qnorm(B, lower.tail=FALSE)*sqrt(pp*(1-pp))) / (pp-p0)
 	 )^2
 
-print(n)
+
+
+#########
+# 2. Mean claim, tested with critical value analysis
+#
+
+sum.na <- function(v) sum(v[!is.na(v)])
+
+sEas <- apply(Eas, 1, sum.na)
+sFri <- apply(Fri, 1, sum.na)
+
+# Collect
+sDays <- c(sEas, sFri)
+
+a  <- 0.05
+u0 <- 6.5
+x  <- mean(sDays)
+s  <- sd(sDays)
+n  <- length(sDays)
+
+zcrit <- qnorm(a/2, lower.tail=FALSE)
+z     <- (x - u0)/(s/sqrt(n))
+
+if (z > zcrit) {
+  print("Mean claim: we reject the Null Hypothesis in the upper-tail!")
+} else if (z < -zcrit) {
+  print("Mean claim: we reject the Null Hypothesis in the lower tail!")
+} else {
+  print("Mean claim: we do not reject the Null Hypothesis.")
+}
