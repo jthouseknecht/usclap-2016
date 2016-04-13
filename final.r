@@ -50,6 +50,21 @@ Loc <- rawdata[,1:2]
 Fri <- rawdata[,3:15]
 Eas <- rawdata[,16:28]
 
+
+###############################################################################
+#                                Hypothesis Tests                             #
+
+#########
+# 1. Proportion claim, tested with p-score analysis
+#
+# Claim: we are attempting to demonstrate that the weather patterns tend to be
+#   rainy on Good Friday, and sunny on Easter Sunday, more so than would be
+#   expected based on random weather patterns.
+#
+# Notes:
+#   - Since we have a substantical number of samples (50), we can just use the
+#     regular proportion test.
+
 # Compress each row of each weather sub-frame into a single {1,0} number
 # indicating the overall weather for the day:
 #
@@ -81,29 +96,14 @@ bP   <- as.numeric(bFri & !bEas)
 data <- data.frame(City=Loc$City, Result=bP)
 print(data)
 
-###############################################################################
-#                                Hypothesis Tests                             #
 
-
-#########
-# 1. Proportion claim, tested with p-score analysis
-
+# Define the variables from the final transformed data set
 n    <- length(bP)
 s    <- sd(bP)
 a    <- 0.05
 
 pHat <- mean(bP)
 p0   <- 0.25
-
-# pp stands for p' (p-prime)
-# The value of β (and hence, the power) is calculated at p = pHat
-pp   <- pHat
-B    <- pnorm(
-          (p0 - pp + qnorm(a, lower.tail=FALSE)*
-           sqrt(p0*(1-p0)/n))/sqrt(pp*(1-pp)/n),
-          lower.tail=TRUE
-        )
-power <- 1-B
 
 # Compute the test statistic. This is an upper-tailed test.
 z      <- (pHat - p0)/sqrt(p0*(1-p0)/n)
@@ -116,54 +116,95 @@ if (pValue < a) {
 }
 
 
-# Necessary sample size for specified power
-power <- 0.05
-B     <- 1-power
-n     <- ( (qnorm(a, lower.tail=FALSE)*sqrt(p0*(1-p0)) +
-            qnorm(B, lower.tail=FALSE)*sqrt(pp*(1-pp))) / (pp-p0)
-         )^2
-
-
 
 #########
 # 2. Mean claim, tested with critical value analysis
 #
+# Claim: we collected data for 13 hours of the day, from 6am to 6pm, inclusive.
+#   We wish to show that, statistically, it rains for more than half of those
+#   thirteen hours each on Good Friday and Easter Sunday respectively.
+#
+# Notes:
+#   - We are actually running two hypothesis test here; one considering the
+#     hourly weather samples for Easter Sunday, and one considering the samples
+#     for Good Friday.
+#   - We don't know the distribution of weather, but since we have 50 samples
+#     in each case, we can exploit the Central Limit Theorem and use a
+#     large-sample test statistic.
 
+
+# Again, a quick function for summation while ignoring missing values
 sum.na <- function(v) sum(v[!is.na(v)])
 
-sEas <- apply(Eas, 1, sum.na)
-sFri <- apply(Fri, 1, sum.na)
-
-# Collect
-sDays <- c(sEas, sFri)
-
+# Variables for both hypothesis tests.
 a  <- 0.05
 u0 <- 6.5
-x  <- mean(sDays)
-s  <- sd(sDays)
-n  <- length(sDays)
+
+# Good Friday
+sFri <- apply(Fri, 1, sum.na)
+
+x  <- mean(sFri)
+s  <- sd(sFri)
+n  <- length(sFri)
 
 zcrit <- qnorm(a/2, lower.tail=FALSE)
 z     <- (x - u0)/(s/sqrt(n))
 
 if (z > zcrit) {
-  print("Mean claim: we reject the Null Hypothesis in the upper-tail!")
+  print("Mean claim (for Good Friday): we reject the Null Hypothesis in the upper-tail!")
 } else if (z < -zcrit) {
-  print("Mean claim: we reject the Null Hypothesis in the lower tail!")
+  print("Mean claim (for Good Friday): we reject the Null Hypothesis in the lower tail!")
 } else {
-  print("Mean claim: we do not reject the Null Hypothesis.")
+  print("Mean claim (for Good Friday): we do not reject the Null Hypothesis.")
 }
 
+# Easter Sunday
+sEas <- apply(Eas, 1, sum.na)
+
+x  <- mean(sEas)
+s  <- sd(sEas)
+n  <- length(sEas)
+
+zcrit <- qnorm(a/2, lower.tail=FALSE)
+z     <- (x - u0)/(s/sqrt(n))
+
+if (z > zcrit) {
+  print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the upper-tail!")
+} else if (z < -zcrit) {
+  print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the lower tail!")
+} else {
+  print("Mean claim (for Easter Sunday): we do not reject the Null Hypothesis.")
+}
 
 
 
 #########
 # 3. Standard Deviation claim, tested with confidence interval analysis
 #
+# Claim: in addition to considering the average rainy hours in a day, there is
+#   the question of standard deviation. We wish to demonstrate that 
+#   standard deviation of rainy hours is not 2, that the weather on
+#   Good Friday and Easter Sunday respectively varies either greater or less
+#   than approximately ±2 hours about the average.
+#
+# Notes:
+#   - Again, we are actually running two hypothesis test here; one considering the
+#     hourly weather samples for Easter Sunday, and one considering the samples
+#     for Good Friday.
+#   - We don't know the distribution of weather, but since we have 50 samples
+#     in each case, we can exploit the Central Limit Theorem and use a
+#     large-sample test statistic.
 
+
+# Variables for both hypothesis tests.
 a  <- 0.05
 o0 <- 2
 v0 <- o0^2
+
+# Good Friday
+x  <- mean(sFri)
+s  <- sd(sFri)
+n  <- length(sFri)
 
 upper <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=TRUE)
 lower <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=FALSE)
@@ -174,9 +215,30 @@ olower <- sqrt(lower)
 oz     <- sqrt(z)
 
 if (oz > oupper) {
-  print("Standard Deviation claim: we reject the Null Hypothesis in the upper-tail!")
+  print("Standard Deviation claim (for Good Friday): we reject the Null Hypothesis in the upper-tail!")
 } else if (oz < olower) {
-  print("Standard Deviation claim: we reject the Null Hypothesis in the lower tail!")
+  print("Standard Deviation claim (for Good Friday): we reject the Null Hypothesis in the lower tail!")
 } else {
-  print("Standard Deviation claim: we do not reject the Null Hypothesis.")
+  print("Standard Deviation claim (for Good Friday): we do not reject the Null Hypothesis.")
+}
+
+# Easter Sunday
+x  <- mean(sEas)
+s  <- sd(sEas)
+n  <- length(sEas)
+
+upper <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=TRUE)
+lower <- (n-1)*s^2/qchisq(a/2, n-1, lower.tail=FALSE)
+z     <- (n-1)*s^2/v0
+
+oupper <- sqrt(upper)
+olower <- sqrt(lower)
+oz     <- sqrt(z)
+
+if (oz > oupper) {
+  print("Standard Deviation claim (for Easter Sunday): we reject the Null Hypothesis in the upper-tail!")
+} else if (oz < olower) {
+  print("Standard Deviation claim (for Easter Sunday): we reject the Null Hypothesis in the lower tail!")
+} else {
+  print("Standard Deviation claim (for Easter Sunday): we do not reject the Null Hypothesis.")
 }
