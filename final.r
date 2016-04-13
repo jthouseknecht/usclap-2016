@@ -50,9 +50,16 @@ Loc <- rawdata[,1:2]
 Fri <- rawdata[,3:15]
 Eas <- rawdata[,16:28]
 
+# Significance Level for all tests
+a  <- 0.05
+
 
 ###############################################################################
 #                                Hypothesis Tests                             #
+
+# A variable to keep a running tally of the number of "successful" hypothesis
+# tests; that is, tests which were able to reject the null hypothesis.
+rejects <- 0
 
 #########
 # 1. Proportion claim, tested with p-score analysis
@@ -100,7 +107,6 @@ print(data)
 # Define the variables from the final transformed data set
 n    <- length(bP)
 s    <- sd(bP)
-a    <- 0.05
 
 pHat <- mean(bP)
 p0   <- 0.25
@@ -111,6 +117,7 @@ pValue <- pnorm(z, lower.tail=FALSE)
 
 if (pValue < a) {
   print("Proportion claim: we reject the Null Hypothesis!")
+  rejects <- rejects + 1
 } else {
   print("Proportion claim: we do not reject the Null Hypothesis.")
 }
@@ -137,7 +144,6 @@ if (pValue < a) {
 sum.na <- function(v) sum(v[!is.na(v)])
 
 # Variables for both hypothesis tests.
-a  <- 0.05
 u0 <- 6.5
 
 # Good Friday
@@ -152,8 +158,10 @@ z     <- (x - u0)/(s/sqrt(n))
 
 if (z > zcrit) {
   print("Mean claim (for Good Friday): we reject the Null Hypothesis in the upper-tail!")
+  rejects <- rejects + 1
 } else if (z < -zcrit) {
   print("Mean claim (for Good Friday): we reject the Null Hypothesis in the lower tail!")
+  rejects <- rejects + 1
 } else {
   print("Mean claim (for Good Friday): we do not reject the Null Hypothesis.")
 }
@@ -170,8 +178,10 @@ z     <- (x - u0)/(s/sqrt(n))
 
 if (z > zcrit) {
   print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the upper-tail!")
+  rejects <- rejects + 1
 } else if (z < -zcrit) {
   print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the lower tail!")
+  rejects <- rejects + 1
 } else {
   print("Mean claim (for Easter Sunday): we do not reject the Null Hypothesis.")
 }
@@ -197,7 +207,6 @@ if (z > zcrit) {
 
 
 # Variables for both hypothesis tests.
-a  <- 0.05
 o0 <- 2
 v0 <- o0^2
 
@@ -216,8 +225,10 @@ oz     <- sqrt(z)
 
 if (oz > oupper) {
   print("Standard Deviation claim (for Good Friday): we reject the Null Hypothesis in the upper-tail!")
+  rejects <- rejects + 1
 } else if (oz < olower) {
   print("Standard Deviation claim (for Good Friday): we reject the Null Hypothesis in the lower tail!")
+  rejects <- rejects + 1
 } else {
   print("Standard Deviation claim (for Good Friday): we do not reject the Null Hypothesis.")
 }
@@ -237,8 +248,23 @@ oz     <- sqrt(z)
 
 if (oz > oupper) {
   print("Standard Deviation claim (for Easter Sunday): we reject the Null Hypothesis in the upper-tail!")
+  rejects <- rejects + 1
 } else if (oz < olower) {
   print("Standard Deviation claim (for Easter Sunday): we reject the Null Hypothesis in the lower tail!")
+  rejects <- rejects + 1
 } else {
   print("Standard Deviation claim (for Easter Sunday): we do not reject the Null Hypothesis.")
 }
+
+
+
+###############################################################################
+#                             Further Comments                                #
+
+# Multiple Hypothesis Error Probability
+cat(
+  rejects,
+  "tests rejected the null hypothesis. The probability that at least one type I error occurred is:",
+  1-(1-a)^rejects,
+  "\n"
+)
