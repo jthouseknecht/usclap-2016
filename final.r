@@ -153,14 +153,11 @@ x  <- mean(sFri)
 s  <- sd(sFri)
 n  <- length(sFri)
 
-zcrit <- qnorm(a/2, lower.tail=FALSE)
+zcrit <- qnorm(a, lower.tail=FALSE)
 z     <- (x - u0)/(s/sqrt(n))
 
 if (z > zcrit) {
-  print("Mean claim (for Good Friday): we reject the Null Hypothesis in the upper-tail!")
-  rejects <- rejects + 1
-} else if (z < -zcrit) {
-  print("Mean claim (for Good Friday): we reject the Null Hypothesis in the lower tail!")
+  print("Mean claim (for Good Friday): we reject the Null Hypothesis!")
   rejects <- rejects + 1
 } else {
   print("Mean claim (for Good Friday): we do not reject the Null Hypothesis.")
@@ -173,14 +170,11 @@ x  <- mean(sEas)
 s  <- sd(sEas)
 n  <- length(sEas)
 
-zcrit <- qnorm(a/2, lower.tail=FALSE)
+zcrit <- qnorm(a, lower.tail=FALSE)
 z     <- (x - u0)/(s/sqrt(n))
 
 if (z > zcrit) {
-  print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the upper-tail!")
-  rejects <- rejects + 1
-} else if (z < -zcrit) {
-  print("Mean claim (for Easter Sunday): we reject the Null Hypothesis in the lower tail!")
+  print("Mean claim (for Easter Sunday): we reject the Null Hypothesis!")
   rejects <- rejects + 1
 } else {
   print("Mean claim (for Easter Sunday): we do not reject the Null Hypothesis.")
